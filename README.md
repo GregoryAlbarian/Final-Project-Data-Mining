@@ -1,0 +1,2 @@
+# Final-Project-Data-Mining
+This project was made for my Data Mining Course. It goes over the contributors to stress upon medical practitioners. The most important contributor to stress of medical practitioners was the profession or specialization they chose within medicine.. I worked with two other classmates. This repo does not have many contributions because it was mainly made through Google Colab.
