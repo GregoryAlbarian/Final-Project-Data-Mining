@@ -1,0 +1,1014 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Copy of  project_draft2.ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/GregoryAlbarian/Final-Project-Data-Mining/blob/main/machine%20learning%20tests\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "OrtYpjUK9MQZ",
+        "outputId": "a9659219-6855-4e7e-9025-47f9daff180f"
+      },
+      "source": [
+        "import seaborn as sn\n",
+        "import matplotlib.pyplot as plt\n",
+        "import pandas as pd\n",
+        "from sklearn.utils import resample\n",
+        "from sklearn.linear_model import LinearRegression\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "from sklearn.model_selection import GridSearchCV\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.metrics import roc_curve, roc_auc_score, auc\n",
+        "from sklearn.metrics import classification_report\n",
+        "from sklearn import tree\n",
+        "from sklearn import metrics\n",
+        "from sklearn.metrics import r2_score\n",
+        "import numpy as np\n",
+        "import statsmodels.api as sm\n",
+        "from sklearn.metrics import accuracy_score as acc\n",
+        "from mlxtend.feature_selection import SequentialFeatureSelector as sfs\n",
+        "from statsmodels.stats.outliers_influence import variance_inflation_factor\n",
+        "from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs\n",
+        "\n",
+        "dt=pd.read_csv('https://raw.githubusercontent.com/GregoryAlbarian/DataForCS530/main/data.csv')\n",
+        "print(dt.info())"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "/usr/local/lib/python3.7/dist-packages/statsmodels/tools/_testing.py:19: FutureWarning: pandas.util.testing is deprecated. Use the functions in the public API at pandas.testing instead.\n",
+            "  import pandas.util.testing as tm\n",
+            "/usr/local/lib/python3.7/dist-packages/sklearn/externals/joblib/__init__.py:15: FutureWarning: sklearn.externals.joblib is deprecated in 0.21 and will be removed in 0.23. Please import this functionality directly from joblib, which can be installed with: pip install joblib. If this warning is raised when loading pickled models, you may need to re-serialize those models with scikit-learn 0.21+.\n",
+            "  warnings.warn(msg, category=FutureWarning)\n"
+          ],
+          "name": "stderr"
+        },
+        {
+          "output_type": "stream",
+          "text": [
+            "<class 'pandas.core.frame.DataFrame'>\n",
+            "RangeIndex: 100000 entries, 0 to 99999\n",
+            "Data columns (total 30 columns):\n",
+            " #   Column                                            Non-Null Count   Dtype  \n",
+            "---  ------                                            --------------   -----  \n",
+            " 0   Age                                               100000 non-null  int64  \n",
+            " 1   Gender                                            100000 non-null  int64  \n",
+            " 2   Sector                                            100000 non-null  int64  \n",
+            " 3   Working_same_sector                               100000 non-null  int64  \n",
+            " 4   Specialization                                    100000 non-null  int64  \n",
+            " 5   Work_hours                                        100000 non-null  int64  \n",
+            " 6   Work_years_span                                   100000 non-null  int64  \n",
+            " 7   Patient_per_day                                   100000 non-null  int64  \n",
+            " 8   Overtime_work_interest                            100000 non-null  int64  \n",
+            " 9   Overtime_work_paid                                100000 non-null  int64  \n",
+            " 10  Stressed_during_work                              100000 non-null  int64  \n",
+            " 11  Feeling_on_job                                    100000 non-null  int64  \n",
+            " 12  Source_of_stress                                  99746 non-null   float64\n",
+            " 13  Handling_stress                                   100000 non-null  int64  \n",
+            " 14  Inform_Management_problems                        100000 non-null  int64  \n",
+            " 15  Management_initiative_to_problems                 100000 non-null  int64  \n",
+            " 16  Hospital_care_towards_stress                      100000 non-null  int64  \n",
+            " 17  Stress_affecting_patient_care                     100000 non-null  int64  \n",
+            " 18  Stress_affecting_concentration                    100000 non-null  int64  \n",
+            " 19  Effort_to_reduce_stress_to_improve_concentration  100000 non-null  int64  \n",
+            " 20  Stress_due_to_too_many_duties                     100000 non-null  int64  \n",
+            " 21  Stress_due_to_age                                 100000 non-null  int64  \n",
+            " 22  Stress_reason_family                              100000 non-null  int64  \n",
+            " 23  Stress_due_to_competition                         100000 non-null  int64  \n",
+            " 24  Prefer_to_stay_alone                              100000 non-null  int64  \n",
+            " 25  Prefer_taking_responsibilities                    100000 non-null  int64  \n",
+            " 26  Alcohol_usage                                     100000 non-null  int64  \n",
+            " 27  Stress_nervous_habits                             100000 non-null  int64  \n",
+            " 28  Stress_makes_nervous                              100000 non-null  int64  \n",
+            " 29  Stress_affects_emotions                           100000 non-null  int64  \n",
+            "dtypes: float64(1), int64(29)\n",
+            "memory usage: 22.9 MB\n",
+            "None\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0GXm-1a4YZ9O"
+      },
+      "source": [
+        "dt = dt.dropna()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "TEa3Nyzofq2j",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "e0b62659-e25e-4a3a-d175-e7d2d6cbc894"
+      },
+      "source": [
+        "dt['Stressed_during_work'].value_counts()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "1    53391\n",
+              "2    39693\n",
+              "3     6662\n",
+              "Name: Stressed_during_work, dtype: int64"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 4
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "OeSyWO-wdsIv"
+      },
+      "source": [
+        "dt_majority1 = dt[dt.Stressed_during_work==1]\n",
+        "dt_majority2 = dt[dt.Stressed_during_work==2]\n",
+        "dt_minority = dt[dt.Stressed_during_work==3]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "QmAVEmySd5hU"
+      },
+      "source": [
+        "dt_majority1_downsampled = resample(dt_majority1,replace=False,n_samples=6662,random_state=42)\n",
+        "dt_minority2_downsampled = resample(dt_majority2,replace=False,n_samples=6662,random_state=42)\n",
+        "dt_balanced = pd.concat([dt_majority1_downsampled,dt_minority2_downsampled,dt_minority])"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "X-ImHZjues_O",
+        "outputId": "881b5b01-1a18-48d6-a68e-1fb845c61933"
+      },
+      "source": [
+        "dt_balanced['Stressed_during_work'].value_counts()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "3    6662\n",
+              "2    6662\n",
+              "1    6662\n",
+              "Name: Stressed_during_work, dtype: int64"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 7
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "aQ4hLUhCInAO",
+        "outputId": "8d97a3ba-73dc-40dd-b276-af496798cb86"
+      },
+      "source": [
+        "dt_balanced.info()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "<class 'pandas.core.frame.DataFrame'>\n",
+            "Int64Index: 19986 entries, 81481 to 66443\n",
+            "Data columns (total 30 columns):\n",
+            " #   Column                                            Non-Null Count  Dtype  \n",
+            "---  ------                                            --------------  -----  \n",
+            " 0   Age                                               19986 non-null  int64  \n",
+            " 1   Gender                                            19986 non-null  int64  \n",
+            " 2   Sector                                            19986 non-null  int64  \n",
+            " 3   Working_same_sector                               19986 non-null  int64  \n",
+            " 4   Specialization                                    19986 non-null  int64  \n",
+            " 5   Work_hours                                        19986 non-null  int64  \n",
+            " 6   Work_years_span                                   19986 non-null  int64  \n",
+            " 7   Patient_per_day                                   19986 non-null  int64  \n",
+            " 8   Overtime_work_interest                            19986 non-null  int64  \n",
+            " 9   Overtime_work_paid                                19986 non-null  int64  \n",
+            " 10  Stressed_during_work                              19986 non-null  int64  \n",
+            " 11  Feeling_on_job                                    19986 non-null  int64  \n",
+            " 12  Source_of_stress                                  19986 non-null  float64\n",
+            " 13  Handling_stress                                   19986 non-null  int64  \n",
+            " 14  Inform_Management_problems                        19986 non-null  int64  \n",
+            " 15  Management_initiative_to_problems                 19986 non-null  int64  \n",
+            " 16  Hospital_care_towards_stress                      19986 non-null  int64  \n",
+            " 17  Stress_affecting_patient_care                     19986 non-null  int64  \n",
+            " 18  Stress_affecting_concentration                    19986 non-null  int64  \n",
+            " 19  Effort_to_reduce_stress_to_improve_concentration  19986 non-null  int64  \n",
+            " 20  Stress_due_to_too_many_duties                     19986 non-null  int64  \n",
+            " 21  Stress_due_to_age                                 19986 non-null  int64  \n",
+            " 22  Stress_reason_family                              19986 non-null  int64  \n",
+            " 23  Stress_due_to_competition                         19986 non-null  int64  \n",
+            " 24  Prefer_to_stay_alone                              19986 non-null  int64  \n",
+            " 25  Prefer_taking_responsibilities                    19986 non-null  int64  \n",
+            " 26  Alcohol_usage                                     19986 non-null  int64  \n",
+            " 27  Stress_nervous_habits                             19986 non-null  int64  \n",
+            " 28  Stress_makes_nervous                              19986 non-null  int64  \n",
+            " 29  Stress_affects_emotions                           19986 non-null  int64  \n",
+            "dtypes: float64(1), int64(29)\n",
+            "memory usage: 4.7 MB\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "d1uqnvtMXkQ_"
+      },
+      "source": [
+        "def calculate_vif_(X, thresh=5):\n",
+        "    variables = list(range(X.shape[1]))\n",
+        "    dropped = True\n",
+        "    while dropped:\n",
+        "        dropped = False\n",
+        "        vif = [variance_inflation_factor(X.iloc[:, variables].values, ix)\n",
+        "               for ix in range(X.iloc[:, variables].shape[1])]\n",
+        "\n",
+        "        maxloc = vif.index(max(vif))\n",
+        "        if max(vif) > thresh:\n",
+        "            print('dropping \\'' + X.iloc[:, variables].columns[maxloc] +\n",
+        "                  '\\' at index: ' + str(maxloc))\n",
+        "            del variables[maxloc]\n",
+        "            dropped = True\n",
+        "\n",
+        "    print('Remaining variables:')\n",
+        "    print(X.columns[variables])\n",
+        "    return X.iloc[:, variables]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "gZqwFC-KXoGX",
+        "outputId": "0fb17e51-62c9-4f3f-d6f5-48fc378eeb58"
+      },
+      "source": [
+        "#Dropping features based on VIF with threshold of VIF <= 5\n",
+        "stressed_during_work_features = dt_balanced.astype('category').drop(['Stressed_during_work'], axis = 1)\n",
+        "X1 = calculate_vif_(stressed_during_work_features)"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "/usr/local/lib/python3.7/dist-packages/statsmodels/stats/outliers_influence.py:185: RuntimeWarning: divide by zero encountered in double_scalars\n",
+            "  vif = 1. / (1. - r_squared_i)\n"
+          ],
+          "name": "stderr"
+        },
+        {
+          "output_type": "stream",
+          "text": [
+            "dropping 'Stress_affecting_concentration' at index: 17\n",
+            "dropping 'Prefer_taking_responsibilities' at index: 23\n",
+            "dropping 'Alcohol_usage' at index: 23\n",
+            "dropping 'Stress_affects_emotions' at index: 25\n",
+            "dropping 'Sector' at index: 2\n",
+            "dropping 'Working_same_sector' at index: 2\n",
+            "dropping 'Effort_to_reduce_stress_to_improve_concentration' at index: 15\n",
+            "dropping 'Work_years_span' at index: 4\n",
+            "dropping 'Stress_makes_nervous' at index: 20\n",
+            "dropping 'Stress_nervous_habits' at index: 19\n",
+            "dropping 'Stress_reason_family' at index: 16\n",
+            "dropping 'Stress_due_to_too_many_duties' at index: 14\n",
+            "dropping 'Inform_Management_problems' at index: 10\n",
+            "dropping 'Stress_due_to_competition' at index: 14\n",
+            "dropping 'Gender' at index: 1\n",
+            "dropping 'Feeling_on_job' at index: 6\n",
+            "dropping 'Overtime_work_paid' at index: 5\n",
+            "dropping 'Handling_stress' at index: 6\n",
+            "dropping 'Stress_due_to_age' at index: 9\n",
+            "dropping 'Prefer_to_stay_alone' at index: 9\n",
+            "dropping 'Stress_affecting_patient_care' at index: 8\n",
+            "dropping 'Hospital_care_towards_stress' at index: 7\n",
+            "dropping 'Age' at index: 0\n",
+            "dropping 'Overtime_work_interest' at index: 3\n",
+            "dropping 'Work_hours' at index: 1\n",
+            "dropping 'Management_initiative_to_problems' at index: 3\n",
+            "Remaining variables:\n",
+            "Index(['Specialization', 'Patient_per_day', 'Source_of_stress'], dtype='object')\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "2x5X_GmSZJwv",
+        "outputId": "95a58099-6fcc-4b99-ca54-9ac84db349a2"
+      },
+      "source": [
+        "#VIF after some of the features have been selected out based on previous VIF dropping\n",
+        "vif_data_target1 = pd.DataFrame()\n",
+        "vif_data_target1[\"feature\"] = X1.columns\n",
+        "vif_data_target1[\"VIF\"] = [variance_inflation_factor(X1.values, i)\n",
+        "                         for i in range(len(X1.columns))]\n",
+        "  \n",
+        "print(vif_data_target1)"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "            feature       VIF\n",
+            "0    Specialization  4.410331\n",
+            "1   Patient_per_day  4.506649\n",
+            "2  Source_of_stress  2.673969\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "HeNYVH-XCcHO"
+      },
+      "source": [
+        "#Create dummies for features selected and split dataset into train and test set\n",
+        "categorical_columns = X1.loc[:, X1.columns].columns.tolist()\n",
+        "for col in categorical_columns:\n",
+        "    col_ohe = pd.get_dummies(X1[col], prefix=col)\n",
+        "    X1 = pd.concat((X1, col_ohe), axis=1).drop(col, axis=1)\n",
+        "\n",
+        "\n",
+        "y = dt_balanced.astype('category').loc[:, \"Stressed_during_work\"]\n",
+        "\n",
+        "X_train1, X_test1, y_train1, y_test1 = train_test_split(X1, y, test_size=0.3, random_state = 42)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "gKmZJgEL1EfX",
+        "outputId": "d9e270d5-88c2-4cfa-ad06-6131be71029c"
+      },
+      "source": [
+        "lm = LinearRegression()\n",
+        "\n",
+        "# Build step forward feature selection\n",
+        "sfs1 = sfs(lm,\n",
+        "           k_features='best',\n",
+        "           forward=True,\n",
+        "           floating=False,\n",
+        "           verbose=2,\n",
+        "           scoring='r2',\n",
+        "           cv=5)\n",
+        "\n",
+        "# Perform SFFS\n",
+        "sfs1 = sfs1.fit(X_train1, y_train1)"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  21 out of  21 | elapsed:    0.2s finished\n",
+            "\n",
+            "[2021-05-13 20:42:24] Features: 1/21 -- score: 0.3054237115735652[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  20 out of  20 | elapsed:    0.2s finished\n",
+            "\n",
+            "[2021-05-13 20:42:24] Features: 2/21 -- score: 0.5772288113130322[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  19 out of  19 | elapsed:    0.2s finished\n",
+            "\n",
+            "[2021-05-13 20:42:24] Features: 3/21 -- score: 0.6031909701609636[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  18 out of  18 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:24] Features: 4/21 -- score: 0.6285882458825209[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  17 out of  17 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:25] Features: 5/21 -- score: 0.6449774822315799[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  16 out of  16 | elapsed:    0.5s finished\n",
+            "\n",
+            "[2021-05-13 20:42:25] Features: 6/21 -- score: 0.6645865740822048[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  15 out of  15 | elapsed:    0.6s finished\n",
+            "\n",
+            "[2021-05-13 20:42:26] Features: 7/21 -- score: 0.6897388464977616[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  14 out of  14 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:26] Features: 8/21 -- score: 0.7233830736763991[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  13 out of  13 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:27] Features: 9/21 -- score: 0.7377417585746546[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  12 out of  12 | elapsed:    0.5s finished\n",
+            "\n",
+            "[2021-05-13 20:42:27] Features: 10/21 -- score: 0.747765734546299[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  11 out of  11 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:28] Features: 11/21 -- score: 0.7594627009977192[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done  10 out of  10 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:28] Features: 12/21 -- score: 0.7626931996795471[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.1s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   9 out of   9 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:28] Features: 13/21 -- score: 0.7667092757119011[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   8 out of   8 | elapsed:    0.4s finished\n",
+            "\n",
+            "[2021-05-13 20:42:29] Features: 14/21 -- score: 0.7675169492139102[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   7 out of   7 | elapsed:    0.3s finished\n",
+            "\n",
+            "[2021-05-13 20:42:29] Features: 15/21 -- score: 0.7676591527128253[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   6 out of   6 | elapsed:    0.3s finished\n",
+            "\n",
+            "[2021-05-13 20:42:29] Features: 16/21 -- score: 0.7680992877174209[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.1s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:    0.3s finished\n",
+            "\n",
+            "[2021-05-13 20:42:30] Features: 17/21 -- score: 0.7681801534703452[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.1s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   4 out of   4 | elapsed:    0.2s finished\n",
+            "\n",
+            "[2021-05-13 20:42:30] Features: 18/21 -- score: 0.7681043829611924[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   3 out of   3 | elapsed:    0.2s finished\n",
+            "\n",
+            "[2021-05-13 20:42:30] Features: 19/21 -- score: 0.7679912837850116[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   2 out of   2 | elapsed:    0.1s finished\n",
+            "\n",
+            "[2021-05-13 20:42:30] Features: 20/21 -- score: 0.7679040863258934[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.1s remaining:    0.0s\n",
+            "[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.1s finished\n",
+            "\n",
+            "[2021-05-13 20:42:30] Features: 21/21 -- score: 0.7680830531863553"
+          ],
+          "name": "stderr"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 295
+        },
+        "id": "0cI-j4cB7E77",
+        "outputId": "436a35a3-4465-4173-f33f-70f9755dacae"
+      },
+      "source": [
+        "fig1 = plot_sfs(sfs1.get_metric_dict(),\n",
+        "                kind='std_dev')\n",
+        "\n",
+        "plt.title('Sequential Forward Selection (w. StdDev)')\n",
+        "plt.grid()\n",
+        "plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "image/png": "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\n",
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ]
+          },
+          "metadata": {
+            "tags": [],
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "dXvn_eER4ZgW",
+        "outputId": "c37ccf1e-92db-4c0c-f5c3-0c3264ab72f9"
+      },
+      "source": [
+        "feat_cols = list(sfs1.k_feature_names_)\n",
+        "print('Best R2 score: %.2f' % sfs1.k_score_)  \n",
+        "print('Best subset (indices):', sfs1.k_feature_idx_)                                        \n",
+        "print('Best subset (corresponding names):', *feat_cols,sep=\"\\n\")"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Best R2 score: 0.77\n",
+            "Best subset (indices): (0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 20)\n",
+            "Best subset (corresponding names):\n",
+            "Specialization_1\n",
+            "Specialization_2\n",
+            "Specialization_3\n",
+            "Specialization_4\n",
+            "Specialization_5\n",
+            "Specialization_7\n",
+            "Specialization_8\n",
+            "Specialization_9\n",
+            "Specialization_10\n",
+            "Specialization_11\n",
+            "Specialization_12\n",
+            "Patient_per_day_1\n",
+            "Patient_per_day_2\n",
+            "Patient_per_day_3\n",
+            "Source_of_stress_1.0\n",
+            "Source_of_stress_2.0\n",
+            "Source_of_stress_5.0\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 700
+        },
+        "id": "eNcA6PH5duDH",
+        "outputId": "93aecce7-46bd-4a23-a80f-ff917fcaff83"
+      },
+      "source": [
+        "pd.DataFrame.from_dict(sfs1.get_metric_dict()).T"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>feature_idx</th>\n",
+              "      <th>cv_scores</th>\n",
+              "      <th>avg_score</th>\n",
+              "      <th>feature_names</th>\n",
+              "      <th>ci_bound</th>\n",
+              "      <th>std_dev</th>\n",
+              "      <th>std_err</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>(10,)</td>\n",
+              "      <td>[0.3137046311735143, 0.29734165348977226, 0.29...</td>\n",
+              "      <td>0.305424</td>\n",
+              "      <td>(Specialization_11,)</td>\n",
+              "      <td>0.0137825</td>\n",
+              "      <td>0.0107233</td>\n",
+              "      <td>0.00536164</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>(6, 10)</td>\n",
+              "      <td>[0.6000579365618097, 0.5754411436821686, 0.560...</td>\n",
+              "      <td>0.577229</td>\n",
+              "      <td>(Specialization_7, Specialization_11)</td>\n",
+              "      <td>0.024108</td>\n",
+              "      <td>0.0187568</td>\n",
+              "      <td>0.00937841</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>(6, 10, 14)</td>\n",
+              "      <td>[0.62778568782372, 0.6034122604519665, 0.58355...</td>\n",
+              "      <td>0.603191</td>\n",
+              "      <td>(Specialization_7, Specialization_11, Patient_...</td>\n",
+              "      <td>0.02594</td>\n",
+              "      <td>0.0201822</td>\n",
+              "      <td>0.0100911</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>(6, 10, 14, 17)</td>\n",
+              "      <td>[0.6530145979701953, 0.6262005216430708, 0.612...</td>\n",
+              "      <td>0.628588</td>\n",
+              "      <td>(Specialization_7, Specialization_11, Patient_...</td>\n",
+              "      <td>0.023697</td>\n",
+              "      <td>0.0184371</td>\n",
+              "      <td>0.00921855</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>5</th>\n",
+              "      <td>(6, 10, 13, 14, 17)</td>\n",
+              "      <td>[0.6611875360145019, 0.6418649504992622, 0.631...</td>\n",
+              "      <td>0.644977</td>\n",
+              "      <td>(Specialization_7, Specialization_11, Patient_...</td>\n",
+              "      <td>0.0181464</td>\n",
+              "      <td>0.0141185</td>\n",
+              "      <td>0.00705925</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>6</th>\n",
+              "      <td>(6, 10, 11, 13, 14, 17)</td>\n",
+              "      <td>[0.683520921336879, 0.6606403888549516, 0.6500...</td>\n",
+              "      <td>0.664587</td>\n",
+              "      <td>(Specialization_7, Specialization_11, Speciali...</td>\n",
+              "      <td>0.0191728</td>\n",
+              "      <td>0.0149171</td>\n",
+              "      <td>0.00745853</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>7</th>\n",
+              "      <td>(6, 8, 10, 11, 13, 14, 17)</td>\n",
+              "      <td>[0.708810660242266, 0.6832126478208138, 0.6778...</td>\n",
+              "      <td>0.689739</td>\n",
+              "      <td>(Specialization_7, Specialization_9, Specializ...</td>\n",
+              "      <td>0.0170314</td>\n",
+              "      <td>0.013251</td>\n",
+              "      <td>0.00662552</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>8</th>\n",
+              "      <td>(6, 7, 8, 10, 11, 13, 14, 17)</td>\n",
+              "      <td>[0.739187222636988, 0.7186962062805642, 0.7113...</td>\n",
+              "      <td>0.723383</td>\n",
+              "      <td>(Specialization_7, Specialization_8, Specializ...</td>\n",
+              "      <td>0.0146272</td>\n",
+              "      <td>0.0113805</td>\n",
+              "      <td>0.00569024</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>9</th>\n",
+              "      <td>(6, 7, 8, 10, 11, 13, 14, 17, 20)</td>\n",
+              "      <td>[0.7558224255492929, 0.7320320522125591, 0.725...</td>\n",
+              "      <td>0.737742</td>\n",
+              "      <td>(Specialization_7, Specialization_8, Specializ...</td>\n",
+              "      <td>0.0155064</td>\n",
+              "      <td>0.0120645</td>\n",
+              "      <td>0.00603225</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>10</th>\n",
+              "      <td>(3, 6, 7, 8, 10, 11, 13, 14, 17, 20)</td>\n",
+              "      <td>[0.7667605975641054, 0.7415354737793942, 0.736...</td>\n",
+              "      <td>0.747766</td>\n",
+              "      <td>(Specialization_4, Specialization_7, Specializ...</td>\n",
+              "      <td>0.0160982</td>\n",
+              "      <td>0.0125249</td>\n",
+              "      <td>0.00626246</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>11</th>\n",
+              "      <td>(3, 6, 7, 8, 9, 10, 11, 13, 14, 17, 20)</td>\n",
+              "      <td>[0.7783322404015226, 0.7528529659050017, 0.748...</td>\n",
+              "      <td>0.759463</td>\n",
+              "      <td>(Specialization_4, Specialization_7, Specializ...</td>\n",
+              "      <td>0.0160195</td>\n",
+              "      <td>0.0124638</td>\n",
+              "      <td>0.00623188</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>12</th>\n",
+              "      <td>(3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 17, 20)</td>\n",
+              "      <td>[0.7823479634881515, 0.7560079835459503, 0.751...</td>\n",
+              "      <td>0.762693</td>\n",
+              "      <td>(Specialization_4, Specialization_5, Specializ...</td>\n",
+              "      <td>0.0159961</td>\n",
+              "      <td>0.0124455</td>\n",
+              "      <td>0.00622276</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>13</th>\n",
+              "      <td>(3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 20)</td>\n",
+              "      <td>[0.7867281898528852, 0.7583698638886454, 0.756...</td>\n",
+              "      <td>0.766709</td>\n",
+              "      <td>(Specialization_4, Specialization_5, Specializ...</td>\n",
+              "      <td>0.017039</td>\n",
+              "      <td>0.0132569</td>\n",
+              "      <td>0.00662847</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>14</th>\n",
+              "      <td>(3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17,...</td>\n",
+              "      <td>[0.7881037554114527, 0.7595607231802957, 0.756...</td>\n",
+              "      <td>0.767517</td>\n",
+              "      <td>(Specialization_4, Specialization_5, Specializ...</td>\n",
+              "      <td>0.0176141</td>\n",
+              "      <td>0.0137044</td>\n",
+              "      <td>0.00685219</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>15</th>\n",
+              "      <td>(2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, ...</td>\n",
+              "      <td>[0.7883665760246445, 0.7597670960968462, 0.756...</td>\n",
+              "      <td>0.767659</td>\n",
+              "      <td>(Specialization_3, Specialization_4, Specializ...</td>\n",
+              "      <td>0.0176954</td>\n",
+              "      <td>0.0137677</td>\n",
+              "      <td>0.00688383</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>16</th>\n",
+              "      <td>(0, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1...</td>\n",
+              "      <td>[0.7893293918464276, 0.7603889045689056, 0.757...</td>\n",
+              "      <td>0.768099</td>\n",
+              "      <td>(Specialization_1, Specialization_3, Specializ...</td>\n",
+              "      <td>0.0180818</td>\n",
+              "      <td>0.0140683</td>\n",
+              "      <td>0.00703414</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>17</th>\n",
+              "      <td>(0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14...</td>\n",
+              "      <td>[0.7895419744778391, 0.760387147219068, 0.7573...</td>\n",
+              "      <td>0.76818</td>\n",
+              "      <td>(Specialization_1, Specialization_2, Specializ...</td>\n",
+              "      <td>0.0180909</td>\n",
+              "      <td>0.0140753</td>\n",
+              "      <td>0.00703765</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>18</th>\n",
+              "      <td>(0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14...</td>\n",
+              "      <td>[0.7894464707030586, 0.7602899539161565, 0.757...</td>\n",
+              "      <td>0.768104</td>\n",
+              "      <td>(Specialization_1, Specialization_2, Specializ...</td>\n",
+              "      <td>0.0181517</td>\n",
+              "      <td>0.0141226</td>\n",
+              "      <td>0.00706131</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>19</th>\n",
+              "      <td>(0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14...</td>\n",
+              "      <td>[0.7890866319375667, 0.7603889715696386, 0.757...</td>\n",
+              "      <td>0.767991</td>\n",
+              "      <td>(Specialization_1, Specialization_2, Specializ...</td>\n",
+              "      <td>0.0179347</td>\n",
+              "      <td>0.0139538</td>\n",
+              "      <td>0.0069769</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>20</th>\n",
+              "      <td>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,...</td>\n",
+              "      <td>[0.7890227114623265, 0.7604275815565853, 0.757...</td>\n",
+              "      <td>0.767904</td>\n",
+              "      <td>(Specialization_1, Specialization_2, Specializ...</td>\n",
+              "      <td>0.0178764</td>\n",
+              "      <td>0.0139084</td>\n",
+              "      <td>0.00695422</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>21</th>\n",
+              "      <td>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,...</td>\n",
+              "      <td>[0.7890332536325941, 0.7603679835328675, 0.756...</td>\n",
+              "      <td>0.768083</td>\n",
+              "      <td>(Specialization_1, Specialization_2, Specializ...</td>\n",
+              "      <td>0.0179957</td>\n",
+              "      <td>0.0140013</td>\n",
+              "      <td>0.00700063</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "                                          feature_idx  ...     std_err\n",
+              "1                                               (10,)  ...  0.00536164\n",
+              "2                                             (6, 10)  ...  0.00937841\n",
+              "3                                         (6, 10, 14)  ...   0.0100911\n",
+              "4                                     (6, 10, 14, 17)  ...  0.00921855\n",
+              "5                                 (6, 10, 13, 14, 17)  ...  0.00705925\n",
+              "6                             (6, 10, 11, 13, 14, 17)  ...  0.00745853\n",
+              "7                          (6, 8, 10, 11, 13, 14, 17)  ...  0.00662552\n",
+              "8                       (6, 7, 8, 10, 11, 13, 14, 17)  ...  0.00569024\n",
+              "9                   (6, 7, 8, 10, 11, 13, 14, 17, 20)  ...  0.00603225\n",
+              "10               (3, 6, 7, 8, 10, 11, 13, 14, 17, 20)  ...  0.00626246\n",
+              "11            (3, 6, 7, 8, 9, 10, 11, 13, 14, 17, 20)  ...  0.00623188\n",
+              "12         (3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 17, 20)  ...  0.00622276\n",
+              "13     (3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 20)  ...  0.00662847\n",
+              "14  (3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17,...  ...  0.00685219\n",
+              "15  (2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, ...  ...  0.00688383\n",
+              "16  (0, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1...  ...  0.00703414\n",
+              "17  (0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14...  ...  0.00703765\n",
+              "18  (0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14...  ...  0.00706131\n",
+              "19  (0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14...  ...   0.0069769\n",
+              "20  (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,...  ...  0.00695422\n",
+              "21  (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,...  ...  0.00700063\n",
+              "\n",
+              "[21 rows x 7 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 59
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "_1_ajfmNxQpI",
+        "outputId": "7fb2de7f-159b-4e2b-f5ad-b11e897a19c0"
+      },
+      "source": [
+        "#Linear model with all original variables\n",
+        "x_all = dt_balanced.astype('category').drop(['Stressed_during_work'], axis = 1)\n",
+        "y_all = dt_balanced.astype('category').loc[:, \"Stressed_during_work\"]\n",
+        "cc = x_all.loc[:, x_all.columns].columns.tolist()\n",
+        "for col in cc:\n",
+        "    col_all = pd.get_dummies(x_all[col], prefix=col)\n",
+        "    x_all = pd.concat((x_all, col_all), axis=1).drop(col, axis=1)\n",
+        "\n",
+        "X_train_all_target1, X_test_all_target1, y_train_all_target1, y_test_all_target1 = train_test_split(x_all, y_all, test_size=0.3, random_state = 42)\n",
+        "\n",
+        "lm1 = LinearRegression()\n",
+        "lm1.fit(X_train_all_target1,y_train_all_target1)\n",
+        "pred_all_target1 = lm1.predict(X_test_all_target1)\n",
+        "print(\"R^2: {}\".format(round(lm1.score(X_test_all_target1, y_test_all_target1),2)))\n",
+        "print(\"MSE: {}\".format(round(metrics.mean_squared_error(y_test_all_target1,pred_all_target1),2)))"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "R^2: 1.0\n",
+            "MSE: 0.0\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Lrnb1d7zpAco",
+        "outputId": "78903325-12dc-44ef-aef0-79669b1c1104"
+      },
+      "source": [
+        "#Linear model with all VIF selected variables\n",
+        "lm2 = LinearRegression()\n",
+        "lm2.fit(X_train1,y_train1)\n",
+        "pred_V_target1 = lm2.predict(X_test1)\n",
+        "print(\"R^2: {}\".format(round(lm2.score(X_test1, y_test1),2)))\n",
+        "print(\"MSE: {}\".format(round(metrics.mean_squared_error(y_test1,pred_V_target1),2)))"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "R^2: 0.75\n",
+            "MSE: 0.16\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vEmls_4ou52u",
+        "outputId": "a37462fe-744b-4489-9651-8f366eb572b0"
+      },
+      "source": [
+        "#Linear model with stepwise selected variables based on SequentialFeatureSelector\n",
+        "X_key_train = X_train1[feat_cols]\n",
+        "X_key_test = X_test1[feat_cols]\n",
+        "lm3 = LinearRegression()\n",
+        "lm3.fit(X_key_train,y_train1)\n",
+        "pred_key = lm3.predict(X_key_test)\n",
+        "print(\"R^2: {}\".format(round(lm3.score(X_key_test, y_test1),2)))\n",
+        "print(\"MSE: {}\".format(round(metrics.mean_squared_error(y_test1,pred_key),2)))"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "R^2: 0.75\n",
+            "MSE: 0.16\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    }
+  ]
+}
